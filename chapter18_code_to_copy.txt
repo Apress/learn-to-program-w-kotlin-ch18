@@ -1,0 +1,161 @@
+Section 18.2:
+fun columnContainsRedPixel(column: Int): Boolean {
+    for (row in 0..height() - 1) {
+        if (pixelByRowColumn(row, column) == Color.RED) {
+            return true
+        }
+    }
+    return false
+}
+
+
+Also Section 18.2:
+@Test
+fun columnContainsRedPixelTest() {
+    val allBlue = load("blue10.png")
+    for (column in 0..9) {
+        Assert.assertFalse(allBlue.columnContainsRedPixel(column))
+    }
+    val allRed = load("red10.png")
+    for (column in 0..9) {
+        Assert.assertTrue(allRed.columnContainsRedPixel(column))
+    }
+
+    //100 rows, 200 columns, all black apart from
+    //a 50-by-50 square with top left corner at
+    //row 50 and column 100.
+    val someRed = load("red_in_black.png")
+    for (column in 0..99) {
+        Assert.assertFalse(someRed.columnContainsRedPixel(column))
+    }
+    for (column in 100..149) {
+        Assert.assertTrue(someRed.columnContainsRedPixel(column))
+    }
+    for (column in 150..199) {
+        Assert.assertFalse(someRed.columnContainsRedPixel(column))
+    }
+}
+
+After Project Step 18.2:
+fun sliceVerticallyIntoPicturesContainingRed(): List<Picture> {
+    val result = mutableListOf<Picture>()
+    var leftLimit = -1
+    var rightLimit = -1
+    for (i in 0..width() - 1) {
+        if (columnContainsRedPixel(i)) {
+            if (leftLimit == -1) {
+                leftLimit = i
+            }
+            rightLimit = i
+        } else {
+            //This is a gap.
+            if (leftLimit >= 0) {
+                //The current sub-picture is complete.
+                val columnsInCurrentPiece = rightLimit - leftLimit + 1
+                val piece = cropTo(0, leftLimit, height(), columnsInCurrentPiece)
+                result.add(piece)
+                //Reset the markers.
+                leftLimit = -1
+                rightLimit = -1
+            }
+        }
+    }
+    //There may be a piece left over
+    //that extends to the edge of the picture.
+    //Add it, if it exists.
+    if (leftLimit >= 0) {
+        val columnsInCurrentPiece = rightLimit - leftLimit + 1
+        val piece = cropTo(0, leftLimit, height(), columnsInCurrentPiece)
+        result.add(piece)
+    }
+    return result
+}
+
+Before Project Step 18.3:
+@Test
+fun sliceVerticallyIntoPicturesContainingRedTest() {
+    val picture = load("slice_test_v.png")
+    val slices = picture.sliceVerticallyIntoPicturesContainingRed()
+    Assert.assertEquals(3, slices.size)
+    checkPicture(load("v0.png"), slices[0])
+    checkPicture(load("v1.png"), slices[1])
+    checkPicture(load("v2.png"), slices[2])
+}
+
+---- Solutions to Project Steps ----
+Project Step 18.1:
+fun rowContainsRedPixel(row: Int): Boolean {
+    for (column in 0..width() - 1) {
+        if (pixelByRowColumn(row, column) == Color.RED) {
+            return true
+        }
+    }
+    return false
+}
+
+@Test
+fun rowContainsRedPixelTest() {
+    val allBlue = load("blue10.png")
+    for (row in 0..9) {
+        Assert.assertFalse(allBlue.rowContainsRedPixel(row))
+    }
+    val allRed = load("red10.png")
+    for (row in 0..9) {
+        Assert.assertTrue(allRed.rowContainsRedPixel(row))
+    }
+
+    val someRed = load("red_in_black.png")
+    for (row in 0..49) {
+        Assert.assertFalse(someRed.rowContainsRedPixel(row))
+    }
+    for (row in 50..99) {
+        Assert.assertTrue(someRed.rowContainsRedPixel(row))
+    }
+}
+
+
+Project Step 18.3:
+fun sliceHorizontallyIntoPicturesContainingRed(): List<Picture> {
+    val result = mutableListOf<Picture>()
+    var upperLimit = -1
+    var lowerLimit = -1
+    for (i in 0..height() - 1) {
+        if (rowContainsRedPixel(i)) {
+            if (upperLimit == -1) {
+                upperLimit = i
+            }
+            lowerLimit = i
+        } else {
+            //This is a gap.
+            if (upperLimit >= 0) {
+                //The current sub-picture is complete.
+                val rowsInCurrentPiece = lowerLimit - upperLimit + 1
+                val piece = cropTo(upperLimit, 0, rowsInCurrentPiece, width())
+                result.add(piece)
+                //Reset the markers.
+                upperLimit = -1
+                lowerLimit = -1
+            }
+        }
+    }
+    //There may be a piece left over
+    //that extends to the edge of the picture.
+    //Add it, if it exists.
+    if (upperLimit >= 0) {
+        val rowsInCurrentPiece = lowerLimit - upperLimit + 1
+        val piece = cropTo(upperLimit, 0, rowsInCurrentPiece, width())
+        result.add(piece)
+    }
+    return result
+}
+
+
+@Test
+fun sliceHorizontallyIntoPicturesContainingRedTest() {
+    val picture = load("slice_test_h.png")
+    val slices = picture.sliceHorizontallyIntoPicturesContainingRed()
+    Assert.assertEquals(3, slices.size)
+    checkPicture(load("h0.png"), slices[0])
+    checkPicture(load("h1.png"), slices[1])
+    checkPicture(load("h2.png"), slices[2])
+}
